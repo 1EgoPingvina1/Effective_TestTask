@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Effective_TestTask
 {
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             try
             {
@@ -24,7 +22,7 @@ namespace Effective_TestTask
             }
         }
 
-        static Parameters ParseArgs(string[] args)
+        public static Parameters ParseArgs(string[] args)
         {
             var parameters = new Parameters();
             for (int i = 0; i < args.Length; i++)
@@ -45,9 +43,9 @@ namespace Effective_TestTask
             return parameters;
         }
 
-        static void FilterLogs(Parameters parameters)
+        public static void FilterLogs(Parameters parameters)
         {
-            var ipCount = new Dictionary<string, int>();
+            var ipCount = new Dictionary<string, DateTime>();
             IPAddress addressStart = null, addressEnd = null;
 
             if (!string.IsNullOrEmpty(parameters.AddressStart))
@@ -74,9 +72,8 @@ namespace Effective_TestTask
                 while ((line = reader.ReadLine()) != null)
                 {
                     int parts = line.IndexOf(':');
-                    //var parts = line.Split(':');
                     string result = parts != -1 ? line.Substring(parts + 1) : line;
-                    var ipAddress = line.Substring(0,parts);
+                    var ipAddress = line.Substring(0, parts);
                     var logTime = DateTime.ParseExact(result, "yyyy-MM-dd HH:mm:ss", null);
 
                     if (addressStart != null && !IsInAddressRange(IPAddress.Parse(ipAddress), addressStart, addressEnd))
@@ -84,9 +81,7 @@ namespace Effective_TestTask
 
                     if (logTime >= parameters.TimeStart && logTime <= parameters.TimeEnd)
                     {
-                        if (!ipCount.ContainsKey(ipAddress))
-                            ipCount[ipAddress] = 0;
-                        ipCount[ipAddress]++;
+                        ipCount[ipAddress] = logTime;
                     }
                 }
             }
@@ -100,32 +95,22 @@ namespace Effective_TestTask
             }
         }
 
-        static bool IsInAddressRange(IPAddress address, IPAddress start, IPAddress end)
+        public static bool IsInAddressRange(IPAddress address, IPAddress start, IPAddress end)
         {
             if (address.AddressFamily != start.AddressFamily || (end != null && address.AddressFamily != end.AddressFamily))
-                return false;
+               return false;
 
             var addressBytes = address.GetAddressBytes();
             var startBytes = start.GetAddressBytes();
             if (end == null)
-                return startBytes.SequenceEqual(addressBytes);
+               return startBytes.SequenceEqual(addressBytes);
             var endBytes = end.GetAddressBytes();
             for (int i = 0; i < addressBytes.Length; i++)
             {
-                if (addressBytes[i] < startBytes[i] || addressBytes[i] > endBytes[i])
+               if (addressBytes[i] < startBytes[i] || addressBytes[i] > endBytes[i])
                     return false;
             }
             return true;
         }
-    }
-
-    class Parameters
-    {
-        public string FileLog { get; set; } = "D:\\proj\\Effective_TestTask\\IP_List.txt";
-        public string FileOutput { get; set; } =  "D:\\proj\\Effective_TestTask\\Log.txt";
-        public string AddressStart { get; set; }
-        public int? AddressMask { get; set; }
-        public DateTime TimeStart { get; set; } = DateTime.Now;
-        public DateTime TimeEnd { get; set; } = DateTime.Now;
     }
 }
